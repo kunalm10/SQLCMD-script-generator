@@ -54,7 +54,8 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Example: run_all_20260103_220915.sql
-    output_file = output_dir / f"run_all_{timestamp}.sql"
+    output_filename = f"{sql_script_path.stem}_multiDB_{timestamp}.sql"
+    output_file = output_dir / output_filename
 
     # Accumulate all lines of the SQLCMD script
     lines = []
