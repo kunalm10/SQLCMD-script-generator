@@ -1,28 +1,17 @@
 import csv
 from pathlib import Path
 from datetime import datetime
-import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
 
-def get_base_dir():
-    # Works for both .py and .exe
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
-    return Path(__file__).resolve().parent
+TOOL_NAME = "SQLCMD Multi-Server Script Generator"
+TOOL_VERSION = "1.0.0"
 
 
-def generate_sqlcmd_from_csv():
-    base_dir = get_base_dir()
-
-    csv_file = base_dir / "servers.csv"
-    sql_file = base_dir / "checkConnection.sql"
-
-    if not csv_file.exists():
-        raise FileNotFoundError(f"Missing file: {csv_file.name}")
-    if not sql_file.exists():
-        raise FileNotFoundError(f"Missing file: {sql_file.name}")
-
+def generate_sqlcmd(csv_path: Path, sql_script_path: Path):
+    output_dir = csv_path.parent
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = base_dir / f"run_all_{timestamp}.sql"
+    output_file = output_dir / f"run_all_{timestamp}.sql"
 
     lines = [
         "------------------------------------------------------------",
@@ -32,7 +21,7 @@ def generate_sqlcmd_from_csv():
         "",
         ':setvar USERNAME "username"',
         ':setvar PASSWORD "password"',
-        f':setvar SCRIPT "{sql_file}"',
+        f':setvar SCRIPT "{sql_script_path}"',
         "",
         "------------------------------------------------------------",
         "-- BEGIN EXECUTION",
@@ -41,9 +30,8 @@ def generate_sqlcmd_from_csv():
         ""
     ]
 
-    with csv_file.open(newline="", encoding="utf-8") as f:
+    with csv_path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-
         for i, row in enumerate(reader, start=1):
             server = row["server"].strip()
             database = row["database"].strip()
@@ -58,12 +46,61 @@ def generate_sqlcmd_from_csv():
             ])
 
     output_file.write_text("\n".join(lines), encoding="utf-8")
-    print(f"SUCCESS: {output_file.name}")
+    return output_file
 
 
-if __name__ == "__main__":
+def browse_csv():
+    path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
+    if path:
+        csv_entry.delete(0, tk.END)
+        csv_entry.insert(0, path)
+
+
+def browse_sql():
+    path = filedialog.askopenfilename(filetypes=[("SQL Files", "*.sql")])
+    if path:
+        sql_entry.delete(0, tk.END)
+        sql_entry.insert(0, path)
+
+
+def run_tool():
     try:
-        generate_sqlcmd_from_csv()
+        csv_path = Path(csv_entry.get())
+        sql_path = Path(sql_entry.get())
+
+        if not csv_path.exists() or not sql_path.exists():
+            raise FileNotFoundError("CSV or SQL file not found.")
+
+        output = generate_sqlcmd(csv_path, sql_path)
+        messagebox.showinfo("Success", f"Generated:\n{output}")
+
     except Exception as e:
-        print(f"ERROR: {e}")
-        input("Press Enter to exit...")
+        messagebox.showerror("Error", str(e))
+
+
+# GUI
+root = tk.Tk()
+root.title(f"{TOOL_NAME} v{TOOL_VERSION}")
+root.geometry("600x220")
+root.resizable(False, False)
+
+tk.Label(root, text=TOOL_NAME, font=("Segoe UI", 12, "bold")).pack(pady=5)
+tk.Label(root, text=f"Version {TOOL_VERSION}").pack()
+
+frame = tk.Frame(root)
+frame.pack(pady=15)
+
+tk.Label(frame, text="CSV File:").grid(row=0, column=0, sticky="e")
+csv_entry = tk.Entry(frame, width=50)
+csv_entry.grid(row=0, column=1, padx=5)
+tk.Button(frame, text="Browse", command=browse_csv).grid(row=0, column=2)
+
+tk.Label(frame, text="SQL Script:").grid(row=1, column=0, sticky="e", pady=5)
+sql_entry = tk.Entry(frame, width=50)
+sql_entry.grid(row=1, column=1, padx=5)
+tk.Button(frame, text="Browse", command=browse_sql).grid(row=1, column=2)
+
+tk.Button(root, text="Generate SQLCMD Script", command=run_tool, width=30)\
+    .pack(pady=15)
+
+root.mainloop()
