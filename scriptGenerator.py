@@ -26,6 +26,14 @@ from tkinter import filedialog, messagebox
 TOOL_NAME = "SQLCMD Multi-Server Script Generator"
 TOOL_VERSION = "1.0.1"
 
+# -------------------------------
+# Global variables
+# -------------------------------
+
+csv_entry = None
+sql_entry = None
+username_entry = None
+password_entry = None
 
 # -------------------------------
 # Core logic: Generate SQLCMD file
@@ -55,11 +63,31 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     # SQLCMD header
     # -------------------------------
 
+    SQLCMD_BANNER = """/*****************************************************************************************
+    ******************************************************************************************
+    **                                                                                      **
+    **                                                                                      **
+    **                                                                                      **
+    **                                                                                      **
+    **   SQLCMD MODE REQUIRED                                                               **
+    **                                                                                      **
+    **   IMPORTANT: This script uses SQLCMD directives and will FAIL if                     **
+    **   SQLCMD Mode is not enabled.                                                        **
+    **                                                                                      **
+    **   REQUIRED STEPS IN SSMS:                                                            **
+    **                                                                                      **
+    **                Query -> SQLCMD Mode                                                  **
+    **                                                                                      **
+    **                                                                                      **
+    **                                                                                      **
+    **                                                                                      **
+    ******************************************************************************************
+    ******************************************************************************************/
+    """
+
+
     lines.extend([
-        "------------------------------------------------------------",
-        "-- MULTI-DATABASE SQLCMD SCRIPT",
-        "-- Enable: Query > SQLCMD Mode",
-        "------------------------------------------------------------",
+        SQLCMD_BANNER,
         "",
         f':setvar USERNAME "{username}"',
         f':setvar PASSWORD "{password}"',
@@ -131,9 +159,7 @@ def open_csv_safely(csv_path: Path):
 
 def browse_csv():
     """Select CSV file and populate textbox"""
-    path = filedialog.askopenfilename(
-        filetypes=[("CSV Files", "*.csv")]
-    )
+    path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
     if path:
         csv_entry.delete(0, tk.END)
         csv_entry.insert(0, path)
@@ -186,75 +212,81 @@ def run_tool():
 # GUI layout
 # -------------------------------
 
-root = tk.Tk()
-root.title(f"{TOOL_NAME} v{TOOL_VERSION}")
-root.geometry("650x300")
-root.resizable(False, False)
+def start_gui():
+    global csv_entry, sql_entry, username_entry, password_entry
 
-# Tool title
-tk.Label(
-    root,
-    text=TOOL_NAME,
-    font=("Segoe UI", 12, "bold")
-).pack(pady=5)
+    root = tk.Tk()
+    root.title(f"{TOOL_NAME} v{TOOL_VERSION}")
+    root.geometry("650x300")
+    root.resizable(False, False)
 
-# Version
-tk.Label(
-    root,
-    text=f"Version {TOOL_VERSION}"
-).pack()
+    # Tool title
+    tk.Label(
+        root,
+        text=TOOL_NAME,
+        font=("Segoe UI", 12, "bold")
+    ).pack(pady=5)
 
-# Main form container
-frame = tk.Frame(root)
-frame.pack(pady=15)
+    # Version
+    tk.Label(
+        root,
+        text=f"Version {TOOL_VERSION}"
+    ).pack()
 
-# -------------------------------
-# CSV input row
-# -------------------------------
+    # Main form container
+    frame = tk.Frame(root)
+    frame.pack(pady=15)
 
-tk.Label(frame, text="CSV File:").grid(row=0, column=0, sticky="e")
-csv_entry = tk.Entry(frame, width=50)
-csv_entry.grid(row=0, column=1, padx=5)
-tk.Button(frame, text="Browse", command=browse_csv).grid(row=0, column=2)
+    # -------------------------------
+    # CSV input row
+    # -------------------------------
 
-# -------------------------------
-# SQL input row
-# -------------------------------
+    tk.Label(frame, text="CSV File:").grid(row=0, column=0, sticky="e")
+    csv_entry = tk.Entry(frame, width=50)
+    csv_entry.grid(row=0, column=1, padx=5)
+    tk.Button(frame, text="Browse", command=browse_csv).grid(row=0, column=2)
 
-tk.Label(frame, text="SQL Script:").grid(row=1, column=0, sticky="e", pady=5)
-sql_entry = tk.Entry(frame, width=50)
-sql_entry.grid(row=1, column=1, padx=5)
-tk.Button(frame, text="Browse", command=browse_sql).grid(row=1, column=2)
+    # -------------------------------
+    # SQL input row
+    # -------------------------------
 
-# -------------------------------
-# Username row
-# -------------------------------
+    tk.Label(frame, text="SQL Script:").grid(row=1, column=0, sticky="e", pady=5)
+    sql_entry = tk.Entry(frame, width=50)
+    sql_entry.grid(row=1, column=1, padx=5)
+    tk.Button(frame, text="Browse", command=browse_sql).grid(row=1, column=2)
 
-tk.Label(frame, text="Username:").grid(row=2, column=0, sticky="e", pady=5)
-username_entry = tk.Entry(frame, width=50)
-username_entry.grid(row=2, column=1, padx=5, columnspan=2)
+    # -------------------------------
+    # Username row
+    # -------------------------------
 
-# -------------------------------
-# Password row
-# -------------------------------
+    tk.Label(frame, text="Username:").grid(row=2, column=0, sticky="e", pady=5)
+    username_entry = tk.Entry(frame, width=50)
+    username_entry.grid(row=2, column=1, padx=5, columnspan=2)
 
-tk.Label(frame, text="Password:").grid(row=3, column=0, sticky="e", pady=5)
-password_entry = tk.Entry(frame, width=50, show="*")
-password_entry.grid(row=3, column=1, padx=5, columnspan=2)
+    # -------------------------------
+    # Password row
+    # -------------------------------
 
-# -------------------------------
-# Generate button
-# -------------------------------
+    tk.Label(frame, text="Password:").grid(row=3, column=0, sticky="e", pady=5)
+    password_entry = tk.Entry(frame, width=50, show="*")
+    password_entry.grid(row=3, column=1, padx=5, columnspan=2)
 
-tk.Button(
-    root,
-    text="Generate SQLCMD Script",
-    command=run_tool,
-    width=35
-).pack(pady=20)
+    # -------------------------------
+    # Generate button
+    # -------------------------------
 
-# -------------------------------
-# Start GUI event loop
-# -------------------------------
+    tk.Button(
+        root,
+        text="Generate SQLCMD Script",
+        command=run_tool,
+        width=35
+    ).pack(pady=20)
 
-root.mainloop()
+    # -------------------------------
+    # Start GUI event loop
+    # -------------------------------
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    start_gui()
