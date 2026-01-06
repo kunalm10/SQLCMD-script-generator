@@ -48,7 +48,8 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     """
 
     # Output file location = same folder as CSV
-    output_dir = csv_path.parent
+    output_dir = csv_path.parent / "multiDB_script"
+    output_dir.mkdir(exist_ok=True)
 
     # Create a timestamp so each run produces a unique file
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
