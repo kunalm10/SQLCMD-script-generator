@@ -79,6 +79,14 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     with open_csv_safely(csv_path) as f:
         reader = csv.DictReader(f)
 
+        # Validate headers ONCE
+        if reader.fieldnames != ["server", "database"]:
+            raise ValueError(
+                "Invalid CSV headers.\n\n"
+                "CSV header must contain exactly:\n"
+                "server,database"
+            )
+
         for i, row in enumerate(reader, start=1):
             server = row["server"].strip()
             database = row["database"].strip()
