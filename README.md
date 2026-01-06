@@ -131,7 +131,9 @@ run_all_YYYYMMDD_HHMMSS.sql
 
 ## Creating .exe application of this tool
 run this command in terminal
+```
 pyinstaller --onefile --windowed --name sqlcmd-generator scriptGenerator.py
+```
 
 ## Version
 
