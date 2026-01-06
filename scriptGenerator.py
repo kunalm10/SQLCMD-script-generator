@@ -1,6 +1,6 @@
 # ============================================================
 # SQLCMD Multi-Server Script Generator (GUI)
-# Version: 1.0.0
+# Version: 1.0.1
 # ============================================================
 
 # -------------------------------
@@ -24,7 +24,7 @@ from tkinter import filedialog, messagebox
 # -------------------------------
 
 TOOL_NAME = "SQLCMD Multi-Server Script Generator"
-TOOL_VERSION = "1.0.0"
+TOOL_VERSION = "1.0.1"
 
 
 # -------------------------------
@@ -76,7 +76,7 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     # Read CSV and generate blocks
     # -------------------------------
 
-    with csv_path.open(newline="", encoding="utf-8") as f:
+    with open_csv_safely(csv_path) as f:
         reader = csv.DictReader(f)
 
         for i, row in enumerate(reader, start=1):
@@ -97,6 +97,25 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
 
     return output_file
 
+def open_csv_safely(csv_path: Path):
+    """
+    Attempts to open CSV using common encodings used on Windows.
+    Fails gracefully with a clear error if none work.
+    """
+    encodings_to_try = ["utf-8-sig", "cp1252"]
+
+    last_error = None
+
+    for encoding in encodings_to_try:
+        try:
+            return csv_path.open(newline="", encoding=encoding)
+        except UnicodeDecodeError as e:
+            last_error = e
+
+    raise ValueError(
+        "Unable to read CSV file.\n"
+        "Please save the file as 'CSV UTF-8' and try again."
+    )
 
 # -------------------------------
 # GUI helper functions
