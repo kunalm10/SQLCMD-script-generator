@@ -6,7 +6,8 @@
 # -------------------------------
 # Standard library imports
 # -------------------------------
-
+import os
+import sys
 import csv                       # For reading server/database CSV
 from pathlib import Path         # For safe Windows path handling
 from datetime import datetime    # For timestamped output filenames
@@ -132,6 +133,9 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
 
     # Write final SQLCMD file to disk
     output_file.write_text("\n".join(lines), encoding="utf-8")
+    # Open output folder automatically on Windows
+    if sys.platform.startswith("win"):
+        os.startfile(output_dir)
 
     return output_file
 
