@@ -126,10 +126,12 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
                 f"PRINT '--- [{i}] {database} on {server} ---'",
                 f":CONNECT {server} -U $(USERNAME) -P $(PASSWORD)",
                 f"USE [{database}];",
+                "GO",                
                 ":r $(SCRIPT)",
                 "GO",
-                "PRINT '---------------------------------------------------------------------------------------------'"
-                "PRINT ''"
+                "PRINT ''",
+                "PRINT '---------------------------------------------------------------------------------------------'",
+                "PRINT ''",
                 ""
             ])
 
