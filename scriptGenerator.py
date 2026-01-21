@@ -35,13 +35,14 @@ csv_entry = None
 sql_entry = None
 username_entry = None
 password_entry = None
+pcb_entry = None
 
 # -------------------------------
 # Core logic: Generate SQLCMD file
 # -------------------------------
 
 def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
-                    username: str, password: str) -> Path:
+                    username: str, password: str, pcb:str) -> Path:
     """
     Reads server/database pairs from CSV
     Embeds username/password into SQLCMD variables
@@ -56,7 +57,8 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Example: run_all_20260103_220915.sql
-    output_filename = f"{sql_script_path.stem}_multiDB_{timestamp}.sql"
+    pcb_suffix = f"_{pcb}" if pcb else ""
+    output_filename = f"{sql_script_path.stem}{pcb_suffix}_multiDB_{timestamp}.sql"
     output_file = output_dir / output_filename
 
     # Accumulate all lines of the SQLCMD script
@@ -87,10 +89,20 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     ******************************************************************************************
     ******************************************************************************************/
     """
+    lines.extend([
+        SQLCMD_BANNER,
+        "",
+    ])
+
+    # OPTIONAL PCB HEADER
+    if pcb:
+        lines.extend([
+            f"-- PCB: {pcb}",
+            ""
+        ])
 
 
     lines.extend([
-        SQLCMD_BANNER,
         "",
         f':setvar USERNAME "{username}"',
         f':setvar PASSWORD "{password}"',
@@ -195,6 +207,7 @@ def run_tool():
         sql_path = Path(sql_entry.get())
         username = username_entry.get().strip()
         password = password_entry.get().strip()
+        pcb = pcb_entry.get().strip()
 
         # Input validation
         if not csv_path.exists():
@@ -202,12 +215,12 @@ def run_tool():
         if not sql_path.exists():
             raise FileNotFoundError("SQL script file not found.")
         if not username:
-            raise ValueError("Username is required.")
+            username = "username"
         if not password:
-            raise ValueError("Password is required.")
+            password = "password"
 
         # Generate SQLCMD file
-        output = generate_sqlcmd(csv_path, sql_path, username, password)
+        output = generate_sqlcmd(csv_path, sql_path, username, password, pcb)
 
         messagebox.showinfo(
             "Success",
@@ -223,7 +236,7 @@ def run_tool():
 # -------------------------------
 
 def start_gui():
-    global csv_entry, sql_entry, username_entry, password_entry
+    global csv_entry, sql_entry, username_entry, password_entry, pcb_entry
 
     root = tk.Tk()
     root.title(f"{TOOL_NAME} v{TOOL_VERSION}")
@@ -251,7 +264,7 @@ def start_gui():
     # CSV input row
     # -------------------------------
 
-    tk.Label(frame, text="CSV File:").grid(row=0, column=0, sticky="e")
+    tk.Label(frame, text="CSV File* :").grid(row=0, column=0, sticky="e")
     csv_entry = tk.Entry(frame, width=50)
     csv_entry.grid(row=0, column=1, padx=5)
     tk.Button(frame, text="Browse", command=browse_csv).grid(row=0, column=2)
@@ -260,7 +273,7 @@ def start_gui():
     # SQL input row
     # -------------------------------
 
-    tk.Label(frame, text="SQL Script:").grid(row=1, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="SQL Script* :").grid(row=1, column=0, sticky="e", pady=5)
     sql_entry = tk.Entry(frame, width=50)
     sql_entry.grid(row=1, column=1, padx=5)
     tk.Button(frame, text="Browse", command=browse_sql).grid(row=1, column=2)
@@ -269,7 +282,7 @@ def start_gui():
     # Username row
     # -------------------------------
 
-    tk.Label(frame, text="Username:").grid(row=2, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="Username :").grid(row=2, column=0, sticky="e", pady=5)
     username_entry = tk.Entry(frame, width=50)
     username_entry.grid(row=2, column=1, padx=5, columnspan=2)
 
@@ -277,9 +290,17 @@ def start_gui():
     # Password row
     # -------------------------------
 
-    tk.Label(frame, text="Password:").grid(row=3, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="Password :").grid(row=3, column=0, sticky="e", pady=5)
     password_entry = tk.Entry(frame, width=50, show="*")
     password_entry.grid(row=3, column=1, padx=5, columnspan=2)
+
+    # -------------------------------
+    # PCB row
+    # -------------------------------
+
+    tk.Label(frame, text="PCB :").grid(row=4, column=0, sticky="e", pady=5)
+    pcb_entry = tk.Entry(frame, width=50)
+    pcb_entry.grid(row=4, column=1, padx=5, columnspan=2)
 
     # -------------------------------
     # Generate button
