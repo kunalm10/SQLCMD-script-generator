@@ -253,8 +253,6 @@ def run_tool():
         pcb = pcb_entry.get().strip()
 
         # Input validation
-        if not csv_path.exists():
-            raise FileNotFoundError("CSV file not found.")
         if not sql_path.exists():
             raise FileNotFoundError("SQL script file not found.")
         
@@ -266,6 +264,8 @@ def run_tool():
                 if var.get()
             ]
         else:
+            if not csv_path.exists():
+                raise FileNotFoundError("CSV file not found.")
             targets = get_targets_from_csv(csv_path)
         if not targets:
             raise ValueError("No server/database targets selected.")
@@ -298,11 +298,11 @@ def render_builtin_targets(category, container):
     for server, db in BUILTIN_TARGETS.get(category, []):
         key = (category, server, db)
         if key not in builtin_target_vars:
-            builtin_target_vars[key] = tk.BooleanVar(value=True)
+            builtin_target_vars[key] = tk.BooleanVar(value=False)
 
         cb = tk.Checkbutton(
             container,
-            text=f"{db} @ {server}",
+            text=f"{server}.[{db}]",
             variable=builtin_target_vars[key]
         )
         cb.pack(anchor="w")
