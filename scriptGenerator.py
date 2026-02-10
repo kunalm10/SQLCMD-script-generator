@@ -9,6 +9,7 @@
 import os
 import sys
 import csv                       # For reading server/database CSV
+import json
 from pathlib import Path         # For safe Windows path handling
 from datetime import datetime    # For timestamped output filenames
 
@@ -187,6 +188,30 @@ def get_targets_from_csv(csv_path: Path) -> list[tuple[str, str]]:
 
     return targets
 
+def load_builtin_targets() -> dict[str, list[tuple[str, str]]]:
+    """
+    Loads built-in targets from targets.json (same folder as this script).
+    Returns: {"Master DBs": [(server, db), ...], ...}
+    """
+    config_path = Path(__file__).parent / "targets.json"
+    if not config_path.exists():
+        raise FileNotFoundError(f"targets.json not found at: {config_path}")
+
+    with config_path.open(encoding="utf-8") as f:
+        raw = json.load(f)
+
+    targets = {}
+    for category, items in raw.items():
+        targets[category] = []
+        for item in items:
+            server = (item.get("server") or "").strip()
+            database = (item.get("database") or "").strip()
+            if server and database:
+                targets[category].append((server, database))
+
+    return targets
+
+BUILTIN_TARGETS = load_builtin_targets()
 # -------------------------------
 # GUI helper functions
 # -------------------------------
