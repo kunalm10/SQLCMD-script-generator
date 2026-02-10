@@ -307,6 +307,10 @@ def render_builtin_targets(category, container):
         )
         cb.pack(anchor="w")
 
+def set_category_selection(category: str, checked: bool):
+    for (cat, server, db), var in builtin_target_vars.items():
+        if cat == category:
+            var.set(checked)
 
 def start_gui():
     global csv_entry, sql_entry, username_entry, password_entry, pcb_entry, source_mode, builtin_category
@@ -416,6 +420,22 @@ def start_gui():
 
     targets_container = tk.Frame(right_frame)
     targets_container.pack(anchor="w")
+
+    # Select / Deselect buttons (current category)
+    btn_frame = tk.Frame(right_frame)
+    btn_frame.pack(anchor="e", pady=5)
+
+    tk.Button(
+        btn_frame,
+        text="Select All",
+        command=lambda: set_category_selection(category_listbox.get(category_listbox.curselection()[0]), True)
+    ).pack(side="left", padx=5)
+
+    tk.Button(
+        btn_frame,
+        text="Deselect All",
+        command=lambda: set_category_selection(category_listbox.get(category_listbox.curselection()[0]), False)
+    ).pack(side="left")
 
     def on_category_change(event):
         sel = category_listbox.curselection()
