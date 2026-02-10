@@ -54,8 +54,8 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     Writes output SQLCMD file next to the CSV
     """
 
-    # Output file location = same folder as CSV
-    output_dir = csv_path.parent / "multiDB_script"
+    # Output file location = same folder as SQL
+    output_dir = sql_script_path.parent / "multiDB_script"
     output_dir.mkdir(exist_ok=True)
 
     # Create a timestamp so each run produces a unique file
@@ -400,7 +400,7 @@ def start_gui():
 
     # Left: Categories
     left_frame = tk.Frame(split_frame, bd=1, relief="groove")
-    left_frame.pack(side="left", padx=5)
+    left_frame.pack(side="left", padx=5, anchor="n", fill="y")
 
     tk.Label(left_frame, text="Categories").pack(anchor="w")
 
@@ -414,12 +414,30 @@ def start_gui():
 
     # Right: Targets
     right_frame = tk.Frame(split_frame, bd=1, relief="groove")
-    right_frame.pack(side="left", padx=10)
+    right_frame.pack(side="left", padx=10, anchor="n")
 
     tk.Label(right_frame, text="Targets").pack(anchor="w")
 
-    targets_container = tk.Frame(right_frame)
-    targets_container.pack(anchor="w")
+    # Scrollable targets area
+    targets_canvas = tk.Canvas(right_frame, width=420, height=320, highlightthickness=0)
+    targets_scroll = tk.Scrollbar(right_frame, orient="vertical", command=targets_canvas.yview)
+    targets_canvas.configure(yscrollcommand=targets_scroll.set)
+
+    targets_canvas.pack(side="left", fill="both", expand=True)
+    targets_scroll.pack(side="left", fill="y")
+
+    targets_container = tk.Frame(targets_canvas)
+    targets_window = targets_canvas.create_window((0, 0), window=targets_container, anchor="nw")
+
+    def _on_targets_configure(event):
+        targets_canvas.configure(scrollregion=targets_canvas.bbox("all"))
+
+    def _on_canvas_configure(event):
+        # keep inner frame the same width as canvas so text aligns nicely
+        targets_canvas.itemconfigure(targets_window, width=event.width)
+
+    targets_container.bind("<Configure>", _on_targets_configure)
+    targets_canvas.bind("<Configure>", _on_canvas_configure)
 
     # Select / Deselect buttons (current category)
     btn_frame = tk.Frame(right_frame)
