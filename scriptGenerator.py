@@ -317,7 +317,7 @@ def start_gui():
 
     root = tk.Tk()
     root.title(f"{TOOL_NAME} v{TOOL_VERSION}")
-    root.geometry("900x650")
+    root.geometry("1000x750")
     root.resizable(True, True)
 
     # Tool title
@@ -342,42 +342,48 @@ def start_gui():
     # -------------------------------
 
     tk.Label(frame, text="CSV File* :").grid(row=0, column=0, sticky="e")
-    csv_entry = tk.Entry(frame, width=50)
-    csv_entry.grid(row=0, column=1, padx=5)
-    tk.Button(frame, text="Browse", command=browse_csv).grid(row=0, column=2)
+    csv_cell = tk.Frame(frame)
+    csv_cell.grid(row=0, column=1, padx=5, sticky="w")
+
+    csv_entry = tk.Entry(csv_cell, width=80)
+    csv_entry.pack(side="left")
+    tk.Button(csv_cell, text="Browse", command=browse_csv).pack(side="left", padx=5)
 
     # -------------------------------
     # SQL input row
     # -------------------------------
 
     tk.Label(frame, text="SQL Script* :").grid(row=1, column=0, sticky="e", pady=5)
-    sql_entry = tk.Entry(frame, width=50)
-    sql_entry.grid(row=1, column=1, padx=5)
-    tk.Button(frame, text="Browse", command=browse_sql).grid(row=1, column=2)
+    sql_cell = tk.Frame(frame)
+    sql_cell.grid(row=1, column=1, padx=5, sticky="w")
+
+    sql_entry = tk.Entry(sql_cell, width=80)
+    sql_entry.pack(side="left")
+    tk.Button(sql_cell, text="Browse", command=browse_sql).pack(side="left", padx=5)
 
     # -------------------------------
     # Username row
     # -------------------------------
 
     tk.Label(frame, text="Username :").grid(row=2, column=0, sticky="e", pady=5)
-    username_entry = tk.Entry(frame, width=50)
-    username_entry.grid(row=2, column=1, padx=5, columnspan=2)
+    username_entry = tk.Entry(frame, width=80)
+    username_entry.grid(row=2, column=1, padx=5, sticky="w")
 
     # -------------------------------
     # Password row
     # -------------------------------
 
     tk.Label(frame, text="Password :").grid(row=3, column=0, sticky="e", pady=5)
-    password_entry = tk.Entry(frame, width=50, show="*")
-    password_entry.grid(row=3, column=1, padx=5, columnspan=2)
+    password_entry = tk.Entry(frame, width=80, show="*")
+    password_entry.grid(row=3, column=1, padx=5, sticky="w")
 
     # -------------------------------
     # PCB row
     # -------------------------------
 
     tk.Label(frame, text="PCB :").grid(row=4, column=0, sticky="e", pady=5)
-    pcb_entry = tk.Entry(frame, width=50)
-    pcb_entry.grid(row=4, column=1, padx=5, columnspan=2)
+    pcb_entry = tk.Entry(frame, width=80)
+    pcb_entry.grid(row=4, column=1, padx=5, sticky="w")
 
     source_mode = tk.StringVar(value="csv")
     builtin_category = tk.StringVar(value=list(BUILTIN_TARGETS.keys())[0])
@@ -401,11 +407,13 @@ def start_gui():
     # Left: Categories
     left_frame = tk.Frame(split_frame, bd=1, relief="groove")
     left_frame.pack(side="left", padx=5, anchor="n", fill="y")
+    left_frame.config(width=320, height=320)
+    left_frame.pack_propagate(False)
 
     tk.Label(left_frame, text="Categories").pack(anchor="w")
 
-    category_listbox = tk.Listbox(left_frame, height=6, exportselection=False)
-    category_listbox.pack()
+    category_listbox = tk.Listbox(left_frame, height=20, width=34, exportselection=False)
+    category_listbox.pack(fill="both", expand=True)
 
     for cat in BUILTIN_TARGETS.keys():
         category_listbox.insert(tk.END, cat)
@@ -419,7 +427,7 @@ def start_gui():
     tk.Label(right_frame, text="Targets").pack(anchor="w")
 
     # Scrollable targets area
-    targets_canvas = tk.Canvas(right_frame, width=420, height=320, highlightthickness=0)
+    targets_canvas = tk.Canvas(right_frame, width=320, height=320, highlightthickness=0)
     targets_scroll = tk.Scrollbar(right_frame, orient="vertical", command=targets_canvas.yview)
     targets_canvas.configure(yscrollcommand=targets_scroll.set)
 
@@ -428,6 +436,24 @@ def start_gui():
 
     targets_container = tk.Frame(targets_canvas)
     targets_window = targets_canvas.create_window((0, 0), window=targets_container, anchor="nw")
+
+    # -------------------------------
+    # Mouse wheel scrolling (works over text & checkboxes)
+    # -------------------------------
+
+    def _on_mousewheel(event):
+        targets_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _bind_mousewheel(_event=None):
+        targets_canvas.bind_all("<MouseWheel>", _on_mousewheel)  # Windows
+
+    def _unbind_mousewheel(_event=None):
+        targets_canvas.unbind_all("<MouseWheel>")
+
+    targets_canvas.bind("<Enter>", _bind_mousewheel)
+    targets_canvas.bind("<Leave>", _unbind_mousewheel)
+    targets_container.bind("<Enter>", _bind_mousewheel)
+    targets_container.bind("<Leave>", _unbind_mousewheel)
 
     def _on_targets_configure(event):
         targets_canvas.configure(scrollregion=targets_canvas.bbox("all"))
