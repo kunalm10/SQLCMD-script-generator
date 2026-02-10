@@ -42,7 +42,8 @@ pcb_entry = None
 # -------------------------------
 
 def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
-                    username: str, password: str, pcb:str) -> Path:
+                    username: str, password: str, pcb:str, 
+                    targets: list[tuple[str, str]],) -> Path:
     """
     Reads server/database pairs from CSV
     Embeds username/password into SQLCMD variables
@@ -116,36 +117,22 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     ])
 
     # -------------------------------
-    # Read CSV and generate blocks
+    # Generate blocks from targets
     # -------------------------------
 
-    with open_csv_safely(csv_path) as f:
-        reader = csv.DictReader(f)
-
-        # Validate headers ONCE
-        if reader.fieldnames != ["server", "database"]:
-            raise ValueError(
-                "Invalid CSV headers.\n\n"
-                "CSV header must contain exactly:\n"
-                "server,database"
-            )
-
-        for i, row in enumerate(reader, start=1):
-            server = row["server"].strip()
-            database = row["database"].strip()
-
-            lines.extend([
-                f"PRINT '--- [{i}] {database} on {server} ---'",
-                f":CONNECT {server} -U $(USERNAME) -P $(PASSWORD)",
-                f"USE [{database}];",
-                "GO",                
-                ":r $(SCRIPT)",
-                "GO",
-                "PRINT ''",
-                "PRINT '---------------------------------------------------------------------------------------------'",
-                "PRINT ''",
-                ""
-            ])
+    for i, (server, database) in enumerate(targets, start=1):
+        lines.extend([
+            f"PRINT '--- [{i}] {database} on {server} ---'",
+            f":CONNECT {server} -U $(USERNAME) -P $(PASSWORD)",
+            f"USE [{database}];",
+            "GO",
+            ":r $(SCRIPT)",
+            "GO",
+            "PRINT ''",
+            "PRINT '---------------------------------------------------------------------------------------------'",
+            "PRINT ''",
+            ""
+        ])
 
     # Write final SQLCMD file to disk
     output_file.write_text("\n".join(lines), encoding="utf-8")
@@ -174,6 +161,31 @@ def open_csv_safely(csv_path: Path):
         "Unable to read CSV file.\n"
         "Please save the file as 'CSV UTF-8' and try again."
     )
+
+def get_targets_from_csv(csv_path: Path) -> list[tuple[str, str]]:
+    """
+    Returns a list of (server, database) pairs from the CSV.
+    """
+    targets: list[tuple[str, str]] = []
+
+    with open_csv_safely(csv_path) as f:
+        reader = csv.DictReader(f)
+
+        # Validate headers ONCE
+        if reader.fieldnames != ["server", "database"]:
+            raise ValueError(
+                "Invalid CSV headers.\n\n"
+                "CSV header must contain exactly:\n"
+                "server,database"
+            )
+
+        for row in reader:
+            server = row["server"].strip()
+            database = row["database"].strip()
+            if server and database:
+                targets.append((server, database))
+
+    return targets
 
 # -------------------------------
 # GUI helper functions
@@ -212,6 +224,9 @@ def run_tool():
         # Input validation
         if not csv_path.exists():
             raise FileNotFoundError("CSV file not found.")
+        targets = get_targets_from_csv(csv_path)
+        if not targets:
+            raise ValueError("No server/database targets found in the CSV.")
         if not sql_path.exists():
             raise FileNotFoundError("SQL script file not found.")
         if not username:
@@ -220,7 +235,7 @@ def run_tool():
             password = "password"
 
         # Generate SQLCMD file
-        output = generate_sqlcmd(csv_path, sql_path, username, password, pcb)
+        output = generate_sqlcmd(csv_path, sql_path, username, password, pcb, targets)
 
         messagebox.showinfo(
             "Success",
