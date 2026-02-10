@@ -1,14 +1,14 @@
 {
   "Master DBs": [
-    {"server": "P-ANL-EXDDB3", "database": "MasterDB_1"},
-    {"server": "P-ANL-EXDDB3", "database": "MasterDB_2"}
+    {"server": "Server1", "database": "MasterDB_1"},
+    {"server": "Server2", "database": "MasterDB_2"}
   ],
   "Replication DBs": [
-    {"server": "P-ANL-EXDDB3", "database": "ReplDB_1"},
-    {"server": "P-ANL-EXDDB3", "database": "ReplDB_2"}
+    {"server": "Server3", "database": "ReplDB_1"},
+    {"server": "Server4", "database": "ReplDB_2"}
   ],
   "Archive DBs": [
-    {"server": "P-ANL-EXDDB9", "database": "ArchiveDB_1"},
-    {"server": "P-ANL-EXDDB9", "database": "ArchiveDB_2"}
+    {"server": "Server5", "database": "ArchiveDB_1"},
+    {"server": "Server6", "database": "ArchiveDB_2"}
   ]
 }
