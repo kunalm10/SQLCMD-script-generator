@@ -39,6 +39,7 @@ password_entry = None
 pcb_entry = None
 source_mode = None          # tk.StringVar
 builtin_category = None     # tk.StringVar
+builtin_target_vars = {}
 
 # -------------------------------
 # Core logic: Generate SQLCMD file
@@ -259,11 +260,15 @@ def run_tool():
         
         # Decide targets source: CSV or Built-in
         if source_mode is not None and source_mode.get() == "builtin":
-            targets = get_targets_from_builtin(builtin_category.get())
+            targets =  [
+                (server, db)
+                for (cat, server, db), var in builtin_target_vars.items()
+                if var.get()
+            ]
         else:
             targets = get_targets_from_csv(csv_path)
         if not targets:
-            raise ValueError("No server/database targets found in the CSV.")
+            raise ValueError("No server/database targets selected.")
         
         if not username:
             username = "username"
@@ -286,13 +291,30 @@ def run_tool():
 # GUI layout
 # -------------------------------
 
+def render_builtin_targets(category, container):
+    for w in container.winfo_children():
+        w.destroy()
+
+    for server, db in BUILTIN_TARGETS.get(category, []):
+        key = (category, server, db)
+        if key not in builtin_target_vars:
+            builtin_target_vars[key] = tk.BooleanVar(value=True)
+
+        cb = tk.Checkbutton(
+            container,
+            text=f"{db} @ {server}",
+            variable=builtin_target_vars[key]
+        )
+        cb.pack(anchor="w")
+
+
 def start_gui():
     global csv_entry, sql_entry, username_entry, password_entry, pcb_entry, source_mode, builtin_category
 
     root = tk.Tk()
     root.title(f"{TOOL_NAME} v{TOOL_VERSION}")
-    root.geometry("650x300")
-    root.resizable(False, False)
+    root.geometry("900x650")
+    root.resizable(True, True)
 
     # Tool title
     tk.Label(
@@ -365,7 +387,48 @@ def start_gui():
     tk.Radiobutton(src_frame, text="Built-in", variable=source_mode, value="builtin").pack(side="left", padx=10)
 
     tk.Label(frame, text="Built-in Type:").grid(row=8, column=0, sticky="e", pady=5)
-    tk.OptionMenu(frame, builtin_category, *BUILTIN_TARGETS.keys()).grid(row=8, column=1, columnspan=2, sticky="w")
+    
+    # -------------------------------
+    # Built-in Targets (Split View)
+    # -------------------------------
+    split_frame = tk.Frame(frame)
+    split_frame.grid(row=9, column=0, columnspan=3, pady=10, sticky="w")
+
+    # Left: Categories
+    left_frame = tk.Frame(split_frame, bd=1, relief="groove")
+    left_frame.pack(side="left", padx=5)
+
+    tk.Label(left_frame, text="Categories").pack(anchor="w")
+
+    category_listbox = tk.Listbox(left_frame, height=6, exportselection=False)
+    category_listbox.pack()
+
+    for cat in BUILTIN_TARGETS.keys():
+        category_listbox.insert(tk.END, cat)
+
+    category_listbox.selection_set(0)
+
+    # Right: Targets
+    right_frame = tk.Frame(split_frame, bd=1, relief="groove")
+    right_frame.pack(side="left", padx=10)
+
+    tk.Label(right_frame, text="Targets").pack(anchor="w")
+
+    targets_container = tk.Frame(right_frame)
+    targets_container.pack(anchor="w")
+
+    def on_category_change(event):
+        sel = category_listbox.curselection()
+        if not sel:
+            return
+        category = category_listbox.get(sel[0])
+        render_builtin_targets(category, targets_container)
+
+    category_listbox.bind("<<ListboxSelect>>", on_category_change)
+
+    # Initial render
+    first_category = category_listbox.get(0)
+    render_builtin_targets(first_category, targets_container)
 
     # -------------------------------
     # Generate button
