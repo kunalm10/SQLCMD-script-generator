@@ -37,6 +37,8 @@ sql_entry = None
 username_entry = None
 password_entry = None
 pcb_entry = None
+source_mode = None          # tk.StringVar
+builtin_category = None     # tk.StringVar
 
 # -------------------------------
 # Core logic: Generate SQLCMD file
@@ -188,6 +190,9 @@ def get_targets_from_csv(csv_path: Path) -> list[tuple[str, str]]:
 
     return targets
 
+def get_targets_from_builtin(category: str) -> list[tuple[str, str]]:
+    return BUILTIN_TARGETS.get(category, [])
+
 def load_builtin_targets() -> dict[str, list[tuple[str, str]]]:
     """
     Loads built-in targets from targets.json (same folder as this script).
@@ -249,11 +254,17 @@ def run_tool():
         # Input validation
         if not csv_path.exists():
             raise FileNotFoundError("CSV file not found.")
-        targets = get_targets_from_csv(csv_path)
-        if not targets:
-            raise ValueError("No server/database targets found in the CSV.")
         if not sql_path.exists():
             raise FileNotFoundError("SQL script file not found.")
+        
+        # Decide targets source: CSV or Built-in
+        if source_mode is not None and source_mode.get() == "builtin":
+            targets = get_targets_from_builtin(builtin_category.get())
+        else:
+            targets = get_targets_from_csv(csv_path)
+        if not targets:
+            raise ValueError("No server/database targets found in the CSV.")
+        
         if not username:
             username = "username"
         if not password:
@@ -276,7 +287,7 @@ def run_tool():
 # -------------------------------
 
 def start_gui():
-    global csv_entry, sql_entry, username_entry, password_entry, pcb_entry
+    global csv_entry, sql_entry, username_entry, password_entry, pcb_entry, source_mode, builtin_category
 
     root = tk.Tk()
     root.title(f"{TOOL_NAME} v{TOOL_VERSION}")
@@ -341,6 +352,20 @@ def start_gui():
     tk.Label(frame, text="PCB :").grid(row=4, column=0, sticky="e", pady=5)
     pcb_entry = tk.Entry(frame, width=50)
     pcb_entry.grid(row=4, column=1, padx=5, columnspan=2)
+
+    source_mode = tk.StringVar(value="csv")
+    builtin_category = tk.StringVar(value=list(BUILTIN_TARGETS.keys())[0])
+
+    tk.Label(frame, text="Target Source:").grid(row=7, column=0, sticky="e", pady=5)
+
+    src_frame = tk.Frame(frame)
+    src_frame.grid(row=7, column=1, columnspan=2, sticky="w")
+
+    tk.Radiobutton(src_frame, text="CSV", variable=source_mode, value="csv").pack(side="left")
+    tk.Radiobutton(src_frame, text="Built-in", variable=source_mode, value="builtin").pack(side="left", padx=10)
+
+    tk.Label(frame, text="Built-in Type:").grid(row=8, column=0, sticky="e", pady=5)
+    tk.OptionMenu(frame, builtin_category, *BUILTIN_TARGETS.keys()).grid(row=8, column=1, columnspan=2, sticky="w")
 
     # -------------------------------
     # Generate button
