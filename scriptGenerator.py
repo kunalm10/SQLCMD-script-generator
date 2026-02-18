@@ -196,16 +196,28 @@ def get_targets_from_builtin(category: str) -> list[tuple[str, str]]:
 
 def load_builtin_targets() -> dict[str, list[tuple[str, str]]]:
     """
-    Loads built-in targets from targets.json (same folder as this script).
+    Load built-in targets from:
+    1) targets.local.json (real, not committed)
+    2) targets.sample.json (pseudo, committed)
     Returns: {"Master DBs": [(server, db), ...], ...}
     """
-    config_path = Path(__file__).parent / "targets.json"
+    
+    base = Path(__file__).parent
+    local_path = base / "targets.local.json"
+    sample_path = base / "targets.sample.json"
+
+    config_path = local_path if local_path.exists() else sample_path
     if not config_path.exists():
-        raise FileNotFoundError(f"targets.json not found at: {config_path}")
+        raise FileNotFoundError(
+            f"Targets config not found. Expected either:\n"
+            f"- {local_path}\n"
+            f"- {sample_path}"
+        )
 
     with config_path.open(encoding="utf-8") as f:
         raw = json.load(f)
 
+    # targets: dict[str, list[tuple[str, str]]] = {}
     targets = {}
     for category, items in raw.items():
         targets[category] = []
@@ -510,6 +522,11 @@ def start_gui():
     # -------------------------------
 
     root.mainloop()
+
+def get_app_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).parent
 
 if __name__ == "__main__":
     start_gui()
