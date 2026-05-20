@@ -127,7 +127,7 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     for i, (server, database) in enumerate(targets, start=1):
         lines.extend([
             f"PRINT '--- [{i}] {database} on {server} ---'",
-            f":CONNECT {server} -U $(USERNAME) -P $(PASSWORD)",
+            f":CONNECT {server} -U $(USERNAME) -P $(PASSWORD) -C",
             f"USE [{database}];",
             "GO",
             ":r $(SCRIPT)",
@@ -194,6 +194,11 @@ def get_targets_from_csv(csv_path: Path) -> list[tuple[str, str]]:
 def get_targets_from_builtin(category: str) -> list[tuple[str, str]]:
     return BUILTIN_TARGETS.get(category, [])
 
+def get_app_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).parent
+
 def load_builtin_targets() -> dict[str, list[tuple[str, str]]]:
     """
     Load built-in targets from:
@@ -202,7 +207,7 @@ def load_builtin_targets() -> dict[str, list[tuple[str, str]]]:
     Returns: {"Master DBs": [(server, db), ...], ...}
     """
     
-    base = Path(__file__).parent
+    base = get_app_dir()
     local_path = base / "targets.local.json"
     sample_path = base / "targets.sample.json"
 
@@ -522,11 +527,6 @@ def start_gui():
     # -------------------------------
 
     root.mainloop()
-
-def get_app_dir() -> Path:
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
-    return Path(__file__).parent
 
 if __name__ == "__main__":
     start_gui()
