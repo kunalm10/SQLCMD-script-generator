@@ -1,6 +1,6 @@
 # ============================================================
 # SQLCMD Multi-Server Script Generator (GUI)
-# Version: 1.0.1
+# Version: 1.0.2
 # ============================================================
 
 # -------------------------------
@@ -26,7 +26,7 @@ from tkinter import filedialog, messagebox
 # -------------------------------
 
 TOOL_NAME = "SQLCMD Multi-Server Script Generator"
-TOOL_VERSION = "1.0.1"
+TOOL_VERSION = "1.0.2"
 
 # -------------------------------
 # Global variables
@@ -373,74 +373,71 @@ def start_gui():
     frame = tk.Frame(root)
     frame.pack(pady=15)
 
+# -------------------------------
+    # Target Source row (ROW 0 - DEFAULT: BUILTIN)
     # -------------------------------
-    # CSV input row
-    # -------------------------------
+    source_mode = tk.StringVar(value="builtin")
+    builtin_category = tk.StringVar(value=list(BUILTIN_TARGETS.keys())[0])
 
-    tk.Label(frame, text="CSV File* :").grid(row=0, column=0, sticky="e")
+    tk.Label(frame, text="Databases list (Choose One):").grid(row=0, column=0, sticky="e", pady=5)
+
+    src_frame = tk.Frame(frame)
+    src_frame.grid(row=0, column=1, columnspan=2, sticky="w")
+
+    tk.Radiobutton(src_frame, text="Server,Database CSV File", variable=source_mode, value="csv").pack(side="left")
+    tk.Radiobutton(src_frame, text="Available DBs in the tool", variable=source_mode, value="builtin").pack(side="left", padx=10)
+
+    # -------------------------------
+    # CSV input row (ROW 1)
+    # -------------------------------
+    tk.Label(frame, text="Server,Database CSV File:").grid(row=1, column=0, sticky="e", pady=5)
     csv_cell = tk.Frame(frame)
-    csv_cell.grid(row=0, column=1, padx=5, sticky="w")
+    csv_cell.grid(row=1, column=1, padx=5, sticky="w")
 
     csv_entry = tk.Entry(csv_cell, width=80)
     csv_entry.pack(side="left")
     tk.Button(csv_cell, text="Browse", command=browse_csv).pack(side="left", padx=5)
-
     tk.Button(csv_cell, text="Download Sample CSV", command=download_sample_csv).pack(side="left", padx=5)
 
     # -------------------------------
-    # SQL input row
+    # SQL input row (ROW 2)
     # -------------------------------
-
-    tk.Label(frame, text="SQL Script* :").grid(row=1, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="SQL Script* :").grid(row=2, column=0, sticky="e", pady=5)
     sql_cell = tk.Frame(frame)
-    sql_cell.grid(row=1, column=1, padx=5, sticky="w")
+    sql_cell.grid(row=2, column=1, padx=5, sticky="w")
 
     sql_entry = tk.Entry(sql_cell, width=80)
     sql_entry.pack(side="left")
     tk.Button(sql_cell, text="Browse", command=browse_sql).pack(side="left", padx=5)
 
     # -------------------------------
-    # Username row
+    # Username row (ROW 3)
     # -------------------------------
-
-    tk.Label(frame, text="Username :").grid(row=2, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="Username :").grid(row=3, column=0, sticky="e", pady=5)
     username_entry = tk.Entry(frame, width=80)
-    username_entry.grid(row=2, column=1, padx=5, sticky="w")
+    username_entry.grid(row=3, column=1, padx=5, sticky="w")
 
     # -------------------------------
-    # Password row
+    # Password row (ROW 4)
     # -------------------------------
-
-    tk.Label(frame, text="Password :").grid(row=3, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="Password :").grid(row=4, column=0, sticky="e", pady=5)
     password_entry = tk.Entry(frame, width=80, show="*")
-    password_entry.grid(row=3, column=1, padx=5, sticky="w")
+    password_entry.grid(row=4, column=1, padx=5, sticky="w")
 
+# -------------------------------
+    # PCB row (ROW 5)
     # -------------------------------
-    # PCB row
-    # -------------------------------
-
-    tk.Label(frame, text="PCB :").grid(row=4, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="PCB :").grid(row=5, column=0, sticky="e", pady=5)
     pcb_entry = tk.Entry(frame, width=80)
-    pcb_entry.grid(row=4, column=1, padx=5, sticky="w")
+    pcb_entry.grid(row=5, column=1, padx=5, sticky="w")
 
-    source_mode = tk.StringVar(value="csv")
-    builtin_category = tk.StringVar(value=list(BUILTIN_TARGETS.keys())[0])
-
-    tk.Label(frame, text="Target Source:").grid(row=7, column=0, sticky="e", pady=5)
-
-    src_frame = tk.Frame(frame)
-    src_frame.grid(row=7, column=1, columnspan=2, sticky="w")
-
-    tk.Radiobutton(src_frame, text="CSV", variable=source_mode, value="csv").pack(side="left")
-    tk.Radiobutton(src_frame, text="Built-in", variable=source_mode, value="builtin").pack(side="left", padx=10)
-
-    tk.Label(frame, text="Built-in Type:").grid(row=8, column=0, sticky="e", pady=5)
-    
     # -------------------------------
-    # Built-in Targets (Split View)
+    # Built-in Targets (ROW 6 & 7)
     # -------------------------------
+    tk.Label(frame, text="Avaliable Databases to pick:").grid(row=6, column=0, sticky="e", pady=5)
+
     split_frame = tk.Frame(frame)
-    split_frame.grid(row=9, column=0, columnspan=3, pady=10, sticky="w")
+    split_frame.grid(row=7, column=0, columnspan=3, pady=10, sticky="w")
 
     # Left: Categories
     left_frame = tk.Frame(split_frame, bd=1, relief="groove")
