@@ -256,6 +256,25 @@ def browse_sql():
         sql_entry.delete(0, tk.END)
         sql_entry.insert(0, path)
 
+def download_sample_csv():
+    """Generates a sample CSV file at a location chosen by the user."""
+    path = filedialog.asksaveasfilename(
+        defaultextension=".csv",
+        filetypes=[("CSV Files", "*.csv")],
+        initialfile="sample_server-db.csv",
+        title="Save Sample CSV"
+    )
+    if path:
+        sample_data = (
+            "server,database\n"
+            "DB_SERVER_01,Database_name_1\n"
+            "DB_SERVER_02,Database_name_2\n"
+            "DB_SERVER_03,Database_name_3\n"
+            "DB_SERVER_04,Database_name_4\n"
+            "DB_SERVER_05,Database_name_5\n"
+        )
+        Path(path).write_text(sample_data, encoding="utf-8")
+        messagebox.showinfo("Success", f"Sample CSV created:\n{path}")
 
 def run_tool():
     """
@@ -365,6 +384,8 @@ def start_gui():
     csv_entry = tk.Entry(csv_cell, width=80)
     csv_entry.pack(side="left")
     tk.Button(csv_cell, text="Browse", command=browse_csv).pack(side="left", padx=5)
+
+    tk.Button(csv_cell, text="Download Sample CSV", command=download_sample_csv).pack(side="left", padx=5)
 
     # -------------------------------
     # SQL input row
