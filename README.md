@@ -1,5 +1,8 @@
 # SQLCMD Multi-Server Script Generator
 
+## Application Preview
+![SQLCMD Multi-Server Script Generator](project-ss.png)
+
 ## Overview
 
 This tool generates a **multi-server SQLCMD script** from a CSV file containing server and database names.
