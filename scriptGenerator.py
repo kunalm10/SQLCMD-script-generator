@@ -41,6 +41,9 @@ source_mode = None          # tk.StringVar
 builtin_category = None     # tk.StringVar
 builtin_target_vars = {}
 
+csv_browse_btn = None
+csv_download_btn = None
+category_listbox = None
 # -------------------------------
 # Core logic: Generate SQLCMD file
 # -------------------------------
@@ -97,8 +100,9 @@ def generate_sqlcmd(csv_path: Path, sql_script_path: Path,
     lines.extend([
         SQLCMD_BANNER,
         "",
+        ":ON ERROR EXIT",
+        "",
     ])
-
     # OPTIONAL PCB HEADER
     if pcb:
         lines.extend([
@@ -373,10 +377,34 @@ def start_gui():
     frame = tk.Frame(root)
     frame.pack(pady=15)
 
+    def update_source_mode_state(*args):
+        mode = source_mode.get()
+        
+        # -------------------------------
+        # CSV Mode Active
+        # -------------------------------
+        if mode == "csv":
+            csv_entry.config(state="normal", bg="white")
+            csv_browse_btn.config(state="normal")
+            csv_download_btn.config(state="normal")
+            
+            category_listbox.config(state="disabled", bg="#F0F0F0")
+        
+        # -------------------------------
+        # Built-in Mode Active
+        # -------------------------------
+        else:
+            csv_entry.config(state="disabled", bg="#F0F0F0")
+            csv_browse_btn.config(state="disabled")
+            csv_download_btn.config(state="disabled")
+            
+            category_listbox.config(state="normal", bg="white")
+
 # -------------------------------
     # Target Source row (ROW 0 - DEFAULT: BUILTIN)
     # -------------------------------
     source_mode = tk.StringVar(value="builtin")
+    source_mode.trace_add("write", update_source_mode_state)
     builtin_category = tk.StringVar(value=list(BUILTIN_TARGETS.keys())[0])
 
     tk.Label(frame, text="Databases list (Choose One):").grid(row=0, column=0, sticky="e", pady=5)
@@ -384,8 +412,11 @@ def start_gui():
     src_frame = tk.Frame(frame)
     src_frame.grid(row=0, column=1, columnspan=2, sticky="w")
 
-    tk.Radiobutton(src_frame, text="Server,Database CSV File", variable=source_mode, value="csv").pack(side="left")
-    tk.Radiobutton(src_frame, text="Available DBs in the tool", variable=source_mode, value="builtin").pack(side="left", padx=10)
+    #tk.Radiobutton(src_frame, text="Server,Database CSV File", variable=source_mode, value="csv").pack(side="left")
+    #tk.Radiobutton(src_frame, text="Available DBs in the tool", variable=source_mode, value="builtin").pack(side="left", padx=10)
+
+    tk.Radiobutton(src_frame, text="Server,Database CSV File", variable=source_mode, value="csv", command=update_source_mode_state).pack(side="left")
+    tk.Radiobutton(src_frame, text="Available DBs in the tool", variable=source_mode, value="builtin", command=update_source_mode_state).pack(side="left", padx=10)
 
     # -------------------------------
     # CSV input row (ROW 1)
@@ -396,8 +427,15 @@ def start_gui():
 
     csv_entry = tk.Entry(csv_cell, width=80)
     csv_entry.pack(side="left")
-    tk.Button(csv_cell, text="Browse", command=browse_csv).pack(side="left", padx=5)
-    tk.Button(csv_cell, text="Download Sample CSV", command=download_sample_csv).pack(side="left", padx=5)
+    #tk.Button(csv_cell, text="Browse", command=browse_csv).pack(side="left", padx=5)
+    #tk.Button(csv_cell, text="Download Sample CSV", command=download_sample_csv).pack(side="left", padx=5)
+
+    csv_browse_btn = tk.Button(csv_cell, text="Browse", command=browse_csv)
+    csv_browse_btn.pack(side="left", padx=5)
+    
+    csv_download_btn = tk.Button(csv_cell, text="Download Sample CSV", command=download_sample_csv)
+    csv_download_btn.pack(side="left", padx=5)
+
 
     # -------------------------------
     # SQL input row (ROW 2)
@@ -434,7 +472,7 @@ def start_gui():
     # -------------------------------
     # Built-in Targets (ROW 6 & 7)
     # -------------------------------
-    tk.Label(frame, text="Avaliable Databases to pick:").grid(row=6, column=0, sticky="e", pady=5)
+    tk.Label(frame, text="Available Databases to pick:").grid(row=6, column=0, sticky="e", pady=5)
 
     split_frame = tk.Frame(frame)
     split_frame.grid(row=7, column=0, columnspan=3, pady=10, sticky="w")
@@ -528,6 +566,8 @@ def start_gui():
     # Initial render
     first_category = category_listbox.get(0)
     render_builtin_targets(first_category, targets_container)
+
+    update_source_mode_state()
 
     # -------------------------------
     # Generate button
